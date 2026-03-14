@@ -1,0 +1,521 @@
+```html
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>RVOL Scanner</title>
+
+<script src="https://s3.tradingview.com/tv.js"></script>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+
+<style>
+body{margin:0;font-family:Arial;}
+.container{display:flex;height:100vh;}
+
+.left{
+width:15%;
+border-right:2px solid #008571;
+overflow:auto;
+}
+
+.right{width:85%;}
+
+table{
+width:100%;
+border-collapse:collapse;
+}
+
+thead{
+position:sticky;
+top:0;
+background:#008571;
+color:white;
+z-index:10;
+}
+
+th,td{
+padding:6px;
+border-bottom:1px solid #008571;
+font-size:12px;
+}
+
+tbody tr:hover{
+background:#FCE3E3;
+cursor:pointer;
+}
+
+.selected{background:#ffe08a !important;}
+
+#status{
+padding:6px;
+font-size:12px;
+background:#008571;
+color:white;
+display:flex;
+align-items:center;
+gap:5px;
+}
+
+#themeBtn,#settingsBtn{
+font-size:10px;
+padding:2px 6px;
+cursor:pointer;
+border:none;
+border-radius:3px;
+}
+
+#contextMenu{
+position:absolute;
+display:none;
+background:white;
+border:1px solid #ccc;
+box-shadow:0 2px 6px rgba(0,0,0,0.2);
+font-size:12px;
+z-index:1000;
+}
+
+#contextMenu div{
+padding:6px;
+cursor:pointer;
+}
+
+#contextMenu div:hover{
+background:#f0f0f0;
+}
+
+#deleteOption{color:red;}
+
+#settingsPopup{
+position:absolute;
+display:none;
+background:white;
+border:1px solid #ccc;
+padding:8px;
+font-size:12px;
+z-index:2000;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+<div class="left">
+
+<div id="status">
+<span id="updateText">Starting...</span>
+<button id="themeBtn" onclick="toggleTheme()">Theme</button>
+<button id="settingsBtn">?</button>
+</div>
+
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Quantity</th>
+<th>Size</th>
+</tr>
+</thead>
+<tbody id="body"></tbody>
+</table>
+
+</div>
+
+<div class="right">
+<div id="chart" style="height:100%;width:100%;"></div>
+</div>
+</div>
+
+<div id="contextMenu">
+<div id="openTVOption">Open in TradingView</div>
+<div id="copyOption">Copy Symbol</div>
+<div id="deleteOption">Delete</div>
+</div>
+
+<div id="settingsPopup">
+<label>
+<input type="checkbox" id="soundToggle">
+Sound Alert
+</label>
+<br><br>
+<button id="resetBtn">Reset Scanner</button>
+</div>
+
+<audio id="alertSound">
+<source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg">
+</audio>
+
+<script>
+
+const firebaseConfig={
+apiKey:"AIzaSyD574WHU0KHvacbB9iXQV2G46K8sEIlow4",
+authDomain:"hammer-d3b7e.firebaseapp.com",
+databaseURL:"https://hammer-d3b7e-default-rtdb.asia-southeast1.firebasedatabase.app",
+projectId:"hammer-d3b7e",
+storageBucket:"hammer-d3b7e.firebasestorage.app",
+messagingSenderId:"323944686275",
+appId:"1:323944686275:web:3877b172766c4937ceb876",
+measurementId:"G-WDVJHS8RM8"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db=firebase.database();
+
+let symbols=[];
+let hammerSymbols={};
+let widget=null;
+let selectedSymbol=null;
+let currentTheme="light";
+let contextSymbol=null;
+
+let settings={sound:true};
+
+document.getElementById("resetBtn").onclick=()=>{
+
+if(confirm("Reset Scanner ? All saved data will be cleared.")){
+db.ref("hammerSignals").remove();
+location.reload();
+}
+
+};
+
+async function fetchSymbols(){
+
+const res=await fetch("https://fapi.binance.com/fapi/v1/exchangeInfo");
+const data=await res.json();
+
+symbols=data.symbols
+.filter(s=>s.contractType==="PERPETUAL" && s.quoteAsset==="USDT")
+.map(s=>s.symbol);
+
+}
+
+function isHammer(c){
+
+let open=parseFloat(c[1]);
+let high=parseFloat(c[2]);
+let low=parseFloat(c[3]);
+let close=parseFloat(c[4]);
+
+let body=Math.abs(close-open);
+let lower=Math.min(open,close)-low;
+let upper=high-Math.max(open,close);
+
+return(
+lower>=upper*2 &&
+upper*2<=lower &&
+body*2<=lower
+);
+
+}
+
+function saveToFirebase(){
+
+Object.keys(hammerSymbols).forEach(symbol=>{
+
+let data=hammerSymbols[symbol];
+
+db.ref("hammerSignals/"+symbol).set({
+symbol:symbol,
+qty:data.qty,
+size:data.size
+});
+
+});
+
+}
+
+async function getHammer(symbol){
+
+try{
+
+const res=await fetch(`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=15m&limit=120`);
+const data=await res.json();
+
+if(!Array.isArray(data)) return null;
+
+let prev=data.slice(0,96);
+
+let dayLow=Math.min(...prev.map(x=>parseFloat(x[3])));
+let dayHigh=Math.max(...prev.map(x=>parseFloat(x[2])));
+
+let last3=data.slice(-3);
+
+for(let i=0;i<last3.length;i++){
+
+let c=last3[i];
+
+if(!isHammer(c)) continue;
+
+let index=data.length-3+i;
+
+let prev20=data.slice(index-20,index);
+let prev20Low=Math.min(...prev20.map(x=>parseFloat(x[3])));
+
+let high=parseFloat(c[2]);
+let low=parseFloat(c[3]);
+
+if(low>=prev20Low) continue;
+
+let lowRule=(low<=dayLow && high>=dayLow);
+let highRule=(low<=dayHigh && high>=dayHigh);
+
+if(lowRule || highRule){
+
+let entry=high;
+let stop=low;
+let risk=0.10;
+
+let diff=entry-stop;
+if(diff<=0) return null;
+
+let qty=risk/diff;
+let size=qty*entry;
+
+return{qty,size};
+
+}
+
+}
+
+return null;
+
+}catch{
+return null;
+}
+
+}
+
+function loadFromFirebase(){
+
+db.ref("hammerSignals").on("value",(snapshot)=>{
+
+hammerSymbols={};
+
+snapshot.forEach(child=>{
+
+let d=child.val();
+
+hammerSymbols[d.symbol]={
+qty:d.qty,
+size:d.size
+};
+
+});
+
+render();
+
+});
+
+}
+
+async function scan(){
+
+document.getElementById("updateText").innerText="Scanning...";
+
+const promises=symbols.map(s=>getHammer(s));
+const results=await Promise.all(promises);
+
+let newList={};
+
+symbols.forEach((s,i)=>{
+if(results[i]) newList[s]=results[i];
+});
+
+hammerSymbols={...hammerSymbols,...newList};
+
+render();
+saveToFirebase();
+
+document.getElementById("updateText").innerText="Updated: "+new Date().toLocaleTimeString();
+
+}
+
+function render(){
+
+const tbody=document.getElementById("body");
+tbody.innerHTML="";
+
+Object.keys(hammerSymbols).forEach(s=>createRow(s));
+
+}
+
+function createRow(s){
+
+let row=document.createElement("tr");
+
+if(selectedSymbol===s)
+row.classList.add("selected");
+
+let data=hammerSymbols[s];
+
+row.innerHTML=`
+<td>${s}</td>
+<td>${data.qty.toFixed(2)}</td>
+<td>${data.size.toFixed(2)}</td>
+`;
+
+row.onclick=()=>{
+selectedSymbol=s;
+changeChartSymbol(s);
+render();
+};
+
+row.oncontextmenu=(e)=>{
+e.preventDefault();
+contextSymbol=s;
+
+const menu=document.getElementById("contextMenu");
+
+menu.style.display="block";
+menu.style.left=e.pageX+"px";
+menu.style.top=e.pageY+"px";
+};
+
+document.getElementById("body").appendChild(row);
+
+}
+
+document.getElementById("openTVOption").onclick=()=>{
+
+if(contextSymbol){
+
+const url="https://in.tradingview.com/chart/?symbol=BINANCE:"+contextSymbol+".P";
+window.open(url,"_blank");
+
+}
+
+hideMenu();
+
+};
+
+document.getElementById("copyOption").onclick=()=>{
+
+if(contextSymbol)
+navigator.clipboard.writeText(contextSymbol);
+
+hideMenu();
+
+};
+
+document.getElementById("deleteOption").onclick=()=>{
+
+if(contextSymbol){
+
+if(confirm("Delete "+contextSymbol+" ?")){
+
+delete hammerSymbols[contextSymbol];
+db.ref("hammerSignals/"+contextSymbol).remove();
+render();
+
+}
+
+}
+
+hideMenu();
+
+};
+
+function hideMenu(){
+document.getElementById("contextMenu").style.display="none";
+}
+
+document.addEventListener("click",hideMenu);
+
+document.getElementById("settingsBtn").onclick=(e)=>{
+
+const pop=document.getElementById("settingsPopup");
+
+pop.style.display="block";
+pop.style.left=e.pageX+"px";
+pop.style.top=e.pageY+"px";
+
+};
+
+document.getElementById("soundToggle").onchange=(e)=>{
+settings.sound=e.target.checked;
+};
+
+document.addEventListener("click",(e)=>{
+if(!e.target.closest("#settingsBtn"))
+document.getElementById("settingsPopup").style.display="none";
+});
+
+function initChart(){
+
+widget=new TradingView.widget({
+container_id:"chart",
+symbol:"BINANCE:BTCUSDT.P",
+interval:"15",
+autosize:true,
+theme:currentTheme,
+studies:[
+"Volume@tv-basicstudies",
+"Pivot Points Standard@tv-basicstudies"
+],
+studies_overrides:{
+"volume.volume.transparency":0
+}
+});
+
+}
+
+function changeChartSymbol(symbol){
+
+document.getElementById("chart").innerHTML="";
+
+widget=new TradingView.widget({
+container_id:"chart",
+symbol:"BINANCE:"+symbol+".P",
+interval:"15",
+autosize:true,
+theme:currentTheme,
+studies:[
+"Volume@tv-basicstudies",
+"Pivot Points Standard@tv-basicstudies"
+],
+studies_overrides:{
+"volume.volume.transparency":0
+}
+});
+
+}
+
+function toggleTheme(){
+
+currentTheme=currentTheme==="light"?"dark":"light";
+
+if(selectedSymbol)
+changeChartSymbol(selectedSymbol);
+else
+changeChartSymbol("BTCUSDT");
+
+}
+
+async function init(){
+
+loadFromFirebase();
+
+document.getElementById("soundToggle").checked=settings.sound;
+
+render();
+
+await fetchSymbols();
+
+initChart();
+
+scan();
+
+setInterval(scan,900000);
+
+}
+
+init();
+
+</script>
+
+</body>
+</html>
+```
