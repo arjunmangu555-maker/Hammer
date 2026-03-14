@@ -35,7 +35,7 @@ z-index:10;
 }
 
 th,td{
-padding:6px;
+padding:8px;
 border-bottom:1px solid #008571;
 font-size:12px;
 }
@@ -47,9 +47,23 @@ cursor:pointer;
 
 .selected{background:#ffe08a !important;}
 
+  
+.sectionHeader{
+background:#f0f0f0;
+font-weight:bold;
+text-align:left;
+}
+
+.dividerRow td{
+padding:0;
+height:8px;
+border-top:3px solid #008571;
+background:none;
+}
+
 #status{
 padding:6px;
-font-size:12px;
+font-size:10px;
 background:#008571;
 color:white;
 display:flex;
@@ -58,7 +72,7 @@ gap:5px;
 }
 
 #themeBtn,#settingsBtn{
-font-size:10px;
+font-size:12px;
 padding:2px 6px;
 cursor:pointer;
 border:none;
@@ -68,22 +82,36 @@ border-radius:3px;
 #contextMenu{
 position:absolute;
 display:none;
-background:white;
-border:1px solid #ccc;
-box-shadow:0 2px 6px rgba(0,0,0,0.2);
-font-size:12px;
+background:#f9fbfb;
+border:1px solid #008571;
+border-radius:6px;
+box-shadow:0 4px 10px rgba(0,0,0,0.2);
+font-size:14px;
+min-width:180px;
+overflow:hidden;
 z-index:1000;
 }
 
 #contextMenu div{
-padding:6px;
+padding:12px 16px;
 cursor:pointer;
+background:#D5E3C8;
+transition:background 0.2s;
+}
+
+#contextMenu div:not(:last-child){
+border-bottom:1px solid #d2e6e3;
 }
 
 #contextMenu div:hover{
-background:#f0f0f0;
+background:#e9f5f3;
 }
 
+#deleteOption{
+color:#d11a2a;
+font-weight:bold;
+}
+  
 #deleteOption{color:red;}
 
 #settingsPopup{
@@ -94,6 +122,7 @@ border:1px solid #ccc;
 padding:8px;
 font-size:12px;
 z-index:2000;
+
 }
 </style>
 </head>
