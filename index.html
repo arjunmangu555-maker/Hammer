@@ -247,6 +247,10 @@ async function fetchSymbols(){
 const res=await fetch("https://fapi.binance.com/fapi/v1/exchangeInfo");
 const data=await res.json();
 
+if(!data.symbols || data.symbols.length === 0){
+return;
+}
+
 symbols=data.symbols
 .filter(s=>s.contractType==="PERPETUAL" && s.quoteAsset==="USDT")
 .map(s=>s.symbol);
@@ -320,6 +324,10 @@ let d = new Date(c[0]).toISOString().slice(0,10);
 return d===yDate;
 });
 
+if(prevDayCandles.length === 0){
+return null;
+}
+
 let dayLow=Math.min(...prevDayCandles.map(x=>parseFloat(x[3])));
 let dayHigh=Math.max(...prevDayCandles.map(x=>parseFloat(x[2])));
 
@@ -334,6 +342,9 @@ if(!isHammer(c)) continue;
 let index=data.length-3+i;
 
 let prev20=data.slice(index-20,index);
+if(prev20.length < 20){
+continue;
+}
 let prev20Low=Math.min(...prev20.map(x=>parseFloat(x[3])));
 
 let high=parseFloat(c[2]);
@@ -432,9 +443,15 @@ for(let i=0;i<symbols.length;i+=BATCH_SIZE){
 let batch = symbols.slice(i,i+BATCH_SIZE);
 
 document.getElementById("updateText").innerText =
-"Scanning "+scanned+"/"+total;
+"Scanning "+(scanned+1)+"-"+(scanned+batch.length)+" / "+total;
 
-const promises=batch.map(s=>getHammer(s));
+const promises=batch.map(async s=>{
+try{
+return await getHammer(s);
+}catch{
+return null;
+}
+});
 const results=await Promise.allSettled(promises);
 
 let newList={};
@@ -451,7 +468,8 @@ hammerSymbols={...hammerSymbols,...newList};
 render();
 saveToFirebase();
 
-scanned+=batch.length;
+scanned += batch.length;
+if(scanned > total) scanned = total;
 
 document.getElementById("updateText").innerText =
 "Scanned "+scanned+"/"+total;
