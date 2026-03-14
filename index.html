@@ -169,13 +169,42 @@ let widget=null;
 let selectedSymbol=null;
 let currentTheme="light";
 let contextSymbol=null;
+let isMasterScanner=false;
+let wakeLock=null;
 
 let settings={sound:true};
+
+async function enableWakeLock(){
+
+try{
+
+wakeLock = await navigator.wakeLock.request('screen');
+
+console.log("Wake Lock Active");
+
+wakeLock.addEventListener("release", () => {
+
+console.log("Wake Lock released");
+
+if(isMasterScanner){
+enableWakeLock();
+}
+
+});
+
+}catch(err){
+
+console.log("Wake Lock Failed", err);
+
+}
+
+}
 
 document.getElementById("resetBtn").onclick=()=>{
 
 if(confirm("Reset Scanner ? All saved data will be cleared.")){
 db.ref("hammerSignals").remove();
+db.ref("hammerScannerLock").remove();
 location.reload();
 }
 
@@ -308,6 +337,35 @@ size:d.size
 render();
 
 });
+
+}
+
+async function checkScannerLock(){
+
+const lockRef = db.ref("hammerScannerLock");
+
+const result = await lockRef.transaction(current => {
+
+if(current === null){
+return true;
+}
+
+return;
+
+});
+
+if(result.committed){
+
+isMasterScanner = true;
+console.log("MASTER SCANNER");
+document.getElementById("updateText").innerText="Master Scanner";
+
+}else{
+
+console.log("VIEWER MODE");
+document.getElementById("updateText").innerText="Viewer Mode";
+
+}
 
 }
 
@@ -498,21 +556,43 @@ async function init(){
 
 loadFromFirebase();
 
-document.getElementById("soundToggle").checked=settings.sound;
+await checkScannerLock();
 
 render();
 
+if(isMasterScanner){
 await fetchSymbols();
+}
 
 initChart();
 
-scan();
+if(isMasterScanner){
 
-setInterval(scan,900000);
+enableWakeLock();
+
+while(true){
+
+await scan();
+
+await new Promise(r=>setTimeout(r,900000));
+
+}
+
+}
 
 }
 
 init();
+
+window.addEventListener("beforeunload",()=>{
+
+if(isMasterScanner){
+
+db.ref("hammerScannerLock").remove();
+
+}
+
+});
 
 </script>
 
