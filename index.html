@@ -414,9 +414,6 @@ document.getElementById("updateText").innerText =
 
 if(scanned<total){
 
-document.getElementById("updateText").innerText =
-"Waiting 30 sec for next batch...";
-
 await new Promise(r=>setTimeout(r,BATCH_DELAY));
 
 }
