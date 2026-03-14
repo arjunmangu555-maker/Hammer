@@ -391,7 +391,7 @@ for(let i=0;i<symbols.length;i+=BATCH_SIZE){
 let batch = symbols.slice(i,i+BATCH_SIZE);
 
 document.getElementById("updateText").innerText =
-"Scanning "+(scanned+1)+"-"+(scanned+batch.length)+" / "+total;
+"Scanning "+scanned+"/"+total;
 
 const promises=batch.map(s=>getHammer(s));
 const results=await Promise.all(promises);
