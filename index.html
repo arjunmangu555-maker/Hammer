@@ -423,13 +423,16 @@ document.getElementById("updateText").innerText =
 "Scanning "+scanned+"/"+total;
 
 const promises=batch.map(s=>getHammer(s));
-const results=await Promise.all(promises);
+const results=await Promise.allSettled(promises);
 
 let newList={};
 
 batch.forEach((s,index)=>{
-if(results[index]) newList[s]=results[index];
+if(results[index].status==="fulfilled" && results[index].value){
+newList[s]=results[index].value;
+}
 });
+
 
 hammerSymbols={...hammerSymbols,...newList};
 
