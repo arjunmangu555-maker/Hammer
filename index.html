@@ -265,10 +265,17 @@ const data=await res.json();
 
 if(!Array.isArray(data)) return null;
 
-let prev=data.slice(0,96);
+const today = new Date().toISOString().slice(0,10);
 
-let dayLow=Math.min(...prev.map(x=>parseFloat(x[3])));
-let dayHigh=Math.max(...prev.map(x=>parseFloat(x[2])));
+let prevDayCandles = data.filter(c => {
+
+let d = new Date(c[0]).toISOString().slice(0,10);
+return d !== today;
+
+});
+
+let dayLow=Math.min(...prevDayCandles.map(x=>parseFloat(x[3])));
+let dayHigh=Math.max(...prevDayCandles.map(x=>parseFloat(x[2])));
 
 let last3=data.slice(-3);
 
