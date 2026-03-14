@@ -1,4 +1,3 @@
-```html
 <!DOCTYPE html>
 <html>
 <head>
@@ -172,6 +171,10 @@ let contextSymbol=null;
 let isMasterScanner=false;
 let wakeLock=null;
 
+const BATCH_SIZE = 100;
+const BATCH_DELAY = 30000;
+const SCAN_INTERVAL = 900000;
+
 let settings={sound:true};
 
 async function enableWakeLock(){
@@ -265,13 +268,15 @@ const data=await res.json();
 
 if(!Array.isArray(data)) return null;
 
-const today = new Date().toISOString().slice(0,10);
+const today = new Date();
+const yesterday = new Date(today);
+yesterday.setDate(today.getDate()-1);
 
-let prevDayCandles = data.filter(c => {
+const yDate = yesterday.toISOString().slice(0,10);
 
+let prevDayCandles = data.filter(c=>{
 let d = new Date(c[0]).toISOString().slice(0,10);
-return d !== today;
-
+return d===yDate;
 });
 
 let dayLow=Math.min(...prevDayCandles.map(x=>parseFloat(x[3])));
@@ -378,15 +383,23 @@ document.getElementById("updateText").innerText="Viewer Mode";
 
 async function scan(){
 
-document.getElementById("updateText").innerText="Scanning...";
+let total = symbols.length;
+let scanned = 0;
 
-const promises=symbols.map(s=>getHammer(s));
+for(let i=0;i<symbols.length;i+=BATCH_SIZE){
+
+let batch = symbols.slice(i,i+BATCH_SIZE);
+
+document.getElementById("updateText").innerText =
+"Scanning "+(scanned+1)+"-"+(scanned+batch.length)+" / "+total;
+
+const promises=batch.map(s=>getHammer(s));
 const results=await Promise.all(promises);
 
 let newList={};
 
-symbols.forEach((s,i)=>{
-if(results[i]) newList[s]=results[i];
+batch.forEach((s,index)=>{
+if(results[index]) newList[s]=results[index];
 });
 
 hammerSymbols={...hammerSymbols,...newList};
@@ -394,9 +407,26 @@ hammerSymbols={...hammerSymbols,...newList};
 render();
 saveToFirebase();
 
-document.getElementById("updateText").innerText="Updated: "+new Date().toLocaleTimeString();
+scanned+=batch.length;
+
+document.getElementById("updateText").innerText =
+"Scanned "+scanned+"/"+total;
+
+if(scanned<total){
+
+document.getElementById("updateText").innerText =
+"Waiting 30 sec for next batch...";
+
+await new Promise(r=>setTimeout(r,BATCH_DELAY));
 
 }
+
+}
+
+document.getElementById("updateText").innerText="Scan Complete";
+
+}
+
 
 function render(){
 
@@ -581,7 +611,7 @@ while(true){
 
 await scan();
 
-await new Promise(r=>setTimeout(r,900000));
+await new Promise(r=>setTimeout(r,SCAN_INTERVAL));
 
 }
 
