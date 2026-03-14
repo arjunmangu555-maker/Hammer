@@ -193,6 +193,7 @@ const db=firebase.database();
 
 let symbols=[];
 let hammerSymbols={};
+let firebaseSymbols={};
 let widget=null;
 let selectedSymbol=null;
 let currentTheme="light";
@@ -280,6 +281,8 @@ function saveToFirebase(){
 
 Object.keys(hammerSymbols).forEach(symbol=>{
 
+if(firebaseSymbols[symbol]) return;
+
 let data=hammerSymbols[symbol];
 
 db.ref("hammerSignals/"+symbol).set({
@@ -287,6 +290,8 @@ symbol:symbol,
 qty:data.qty,
 size:data.size
 });
+
+firebaseSymbols[symbol]=true;
 
 });
 
@@ -309,9 +314,16 @@ const res = await fetch(
 
 clearTimeout(timeout);
 
+if(!res.ok){
+return null;
+}
+
 const data=await res.json();
 
-if(!Array.isArray(data)) return null;
+
+if(!Array.isArray(data) || data.length < 50){
+return null;
+}
 
 const today = new Date();
 const yesterday = new Date(today);
@@ -362,10 +374,17 @@ let stop=low;
 let risk=0.10;
 
 let diff=entry-stop;
-if(diff<=0) return null;
+
+if(!isFinite(diff) || diff<=0){
+return null;
+}
 
 let qty=risk/diff;
 let size=qty*entry;
+
+if(!isFinite(qty) || !isFinite(size)){
+return null;
+}
 
 return{qty,size};
 
@@ -387,6 +406,8 @@ db.ref("hammerSignals").on("value",(snapshot)=>{
 
 hammerSymbols={};
 
+firebaseSymbols={};
+
 snapshot.forEach(child=>{
 
 let d=child.val();
@@ -395,6 +416,8 @@ hammerSymbols[d.symbol]={
 qty:d.qty,
 size:d.size
 };
+
+firebaseSymbols[d.symbol]=true;
 
 });
 
@@ -443,17 +466,27 @@ for(let i=0;i<symbols.length;i+=BATCH_SIZE){
 let batch = symbols.slice(i,i+BATCH_SIZE);
 
 document.getElementById("updateText").innerText =
-"Scanning "+(scanned+1)+"-"+(scanned+batch.length)+" / "+total;
+"Scanning "+scanned+"/"+total;
 
-const promises=batch.map(async s=>{
+const results=[];
+
+for(let j=0;j<batch.length;j+=10){
+
+let sub=batch.slice(j,j+10);
+
+let subPromises=sub.map(async s=>{
 try{
 return await getHammer(s);
 }catch{
 return null;
 }
 });
-const results=await Promise.allSettled(promises);
 
+let subResults=await Promise.allSettled(subPromises);
+
+results.push(...subResults);
+
+}
 let newList={};
 
 batch.forEach((s,index)=>{
