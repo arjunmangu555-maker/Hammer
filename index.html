@@ -144,6 +144,7 @@ z-index:2000;
 <th>Symbol</th>
 <th>Quantity</th>
 <th>Size</th>
+<th>Time</th>
 </tr>
 </thead>
 <tbody id="body"></tbody>
@@ -292,7 +293,8 @@ let data=hammerSymbols[symbol];
 db.ref("hammerSignals/"+symbol).set({
 symbol:symbol,
 qty:data.qty,
-size:data.size
+size:data.size,
+time:Date.now()
 });
 
 firebaseSymbols[symbol]=true;
@@ -424,7 +426,8 @@ let d=child.val();
 
 hammerSymbols[d.symbol]={
 qty:d.qty,
-size:d.size
+size:d.size,
+time:d.time || Date.now()
 };
 
 firebaseSymbols[d.symbol]=true;
@@ -502,9 +505,15 @@ results.push(r);
 let newList={};
 
 batch.forEach((s,index)=>{
-if(results[index].status==="fulfilled" && results[index].value){
+
+if(results[index] &&
+results[index].status==="fulfilled" &&
+results[index].value){
+
 newList[s]=results[index].value;
+
 }
+
 });
 
 
@@ -537,7 +546,9 @@ function render(){
 const tbody=document.getElementById("body");
 tbody.innerHTML="";
 
-Object.keys(hammerSymbols).forEach(s=>createRow(s));
+Object.entries(hammerSymbols)
+.sort((a,b)=> b[1].time - a[1].time)
+.forEach(([s])=>createRow(s));
 
 }
 
@@ -554,6 +565,7 @@ row.innerHTML=`
 <td>${s}</td>
 <td>${data.qty.toFixed(2)}</td>
 <td>${data.size.toFixed(2)}</td>
+<td>${new Date(data.time).toLocaleTimeString()}</td>
 `;
 
 row.onclick=()=>{
