@@ -253,7 +253,11 @@ return;
 }
 
 symbols=data.symbols
-.filter(s=>s.contractType==="PERPETUAL" && s.quoteAsset==="USDT")
+.filter(s=>
+s.contractType==="PERPETUAL" &&
+s.quoteAsset==="USDT" &&
+s.status==="TRADING"
+)
 .map(s=>s.symbol);
 
 }
@@ -297,22 +301,28 @@ firebaseSymbols[symbol]=true;
 
 }
 
+async function fetchWithTimeout(url, timeout=10000){
+
+return Promise.race([
+
+fetch(url),
+
+new Promise((_,reject)=>
+setTimeout(()=>reject(new Error("timeout")),timeout)
+)
+
+]);
+
+}
+
 async function getHammer(symbol){
 
 try{
 
-const controller = new AbortController();
-
-const timeout = setTimeout(()=>{
-controller.abort();
-},10000);
-
-const res = await fetch(
+const res = await fetchWithTimeout(
 `https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=15m&limit=120`,
-{signal:controller.signal}
+10000
 );
-
-clearTimeout(timeout);
 
 if(!res.ok){
 return null;
@@ -470,9 +480,9 @@ document.getElementById("updateText").innerText =
 
 const results=[];
 
-for(let j=0;j<batch.length;j+=10){
+for(let j=0;j<batch.length;j+=20){
 
-let sub=batch.slice(j,j+10);
+let sub=batch.slice(j,j+20);
 
 let subPromises=sub.map(async s=>{
 try{
@@ -484,7 +494,9 @@ return null;
 
 let subResults=await Promise.allSettled(subPromises);
 
-results.push(...subResults);
+subResults.forEach(r=>{
+results.push(r);
+});
 
 }
 let newList={};
@@ -681,6 +693,27 @@ changeChartSymbol("BTCUSDT");
 
 }
 
+async function scannerLoop(){
+
+while(true){
+
+try{
+
+await scan();
+
+}catch(e){
+
+console.log("SCAN ERROR:",e);
+
+}
+
+await new Promise(r=>setTimeout(r,SCAN_INTERVAL));
+
+}
+
+}
+
+
 async function init(){
 
 loadFromFirebase();
@@ -699,19 +732,19 @@ if(isMasterScanner){
 
 enableWakeLock();
 
-while(true){
-
-await scan();
-
-await new Promise(r=>setTimeout(r,SCAN_INTERVAL));
-
-}
+scannerLoop();
 
 }
 
 }
 
 init();
+
+setInterval(()=>{
+
+console.log("Scanner Alive", new Date().toLocaleTimeString());
+
+},60000);
 
 window.addEventListener("beforeunload",()=>{
 
