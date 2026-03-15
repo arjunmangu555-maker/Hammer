@@ -536,7 +536,13 @@ await new Promise(r=>setTimeout(r,BATCH_DELAY));
 
 }
 
-document.getElementById("updateText").innerText="Scan Complete";
+let now = new Date();
+
+let hh = String(now.getHours()).padStart(2,'0');
+let mm = String(now.getMinutes()).padStart(2,'0');
+
+document.getElementById("updateText").innerText =
+"Scanned Done " + hh + ":" + mm;
 
 }
 
