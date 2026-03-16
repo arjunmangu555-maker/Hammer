@@ -332,30 +332,24 @@ return null;
 
 const data=await res.json();
 
-
 if(!Array.isArray(data) || data.length < 50){
 return null;
 }
 
-const today = new Date();
-const yesterday = new Date(today);
-yesterday.setDate(today.getDate()-1);
+// GET PREVIOUS DAY HIGH
+const dayRes=await fetchWithTimeout(
+`https://fapi.binance.com/fapi/v1/klines?symbol=${symbol}&interval=1d&limit=2`,10000
+);
 
-const yDate = yesterday.toISOString().slice(0,10);
+const dayData=await dayRes.json();
 
-let prevDayCandles = data.filter(c=>{
-let d = new Date(c[0]).toISOString().slice(0,10);
-return d===yDate;
-});
-
-if(prevDayCandles.length === 0){
+if(!Array.isArray(dayData) || dayData.length<1){
 return null;
 }
 
-let dayLow=Math.min(...prevDayCandles.map(x=>parseFloat(x[3])));
-let dayHigh=Math.max(...prevDayCandles.map(x=>parseFloat(x[2])));
+let prevDayHigh=parseFloat(dayData[0][2]);
 
-let last3=data.slice(-3);
+let last3=data.slice(-4,-1);
 
 for(let i=0;i<last3.length;i++){
 
@@ -363,23 +357,22 @@ let c=last3[i];
 
 if(!isHammer(c)) continue;
 
-let index=data.length-3+i;
+let index=data.length-4+i;
 
-let prev20=data.slice(index-20,index);
-if(prev20.length < 20){
+let prev10=data.slice(index-10,index);
+if(prev10.length < 10){
 continue;
 }
-let prev20Low=Math.min(...prev20.map(x=>parseFloat(x[3])));
+let prev10Low=Math.min(...prev10.map(x=>parseFloat(x[3])));
 
 let high=parseFloat(c[2]);
 let low=parseFloat(c[3]);
 
-if(low>=prev20Low) continue;
+if(low>=prev10Low) continue;
 
-let lowRule=(low<=dayLow && high>=dayLow);
-let highRule=(low<=dayHigh && high>=dayHigh);
+let highRule=(low<=prevDayHigh && high>=prevDayHigh);
 
-if(lowRule || highRule){
+if(highRule){
 
 let entry=high;
 let stop=low;
