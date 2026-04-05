@@ -722,22 +722,32 @@ let closedHigh=parseFloat(closed[2]);
 let liveHigh=parseFloat(live[2]);
 
 // 🔥 BREAKOUT RANGE
-let breakoutLen = settings.breakoutCandles || 300;
+let breakoutLen = settings.breakoutCandles ?? 300;
+
+let breakoutPass = true; // default
+
+// 🔥 breakout filter only if >0
+if(breakoutLen > 0){
 
 let highs=data.slice(0,breakoutLen).map(x=>parseFloat(x[2]));
+
 let highestHigh = -Infinity;
+
 for(let h of highs){
 if(h > highestHigh) highestHigh = h;
 }
+
+breakoutPass = (closedHigh > highestHigh || liveHigh > highestHigh);
+
+}
+
 let rvol_closed=closedVol/avg;
 let rvol_live=liveVol/avg;
 
-let minR = settings.minRvol || 15;
+let minR = settings.minRvol ?? 15;
 
 // OR condition
 let rvolPass = (rvol_closed >= minR || rvol_live >= minR);
-
-let breakoutPass = (closedHigh > highestHigh || liveHigh > highestHigh);
 
 if(rvolPass && breakoutPass){
 
@@ -1446,8 +1456,8 @@ document.getElementById("minRvolInput").value = settings.minRvol || 15;
 document.getElementById("positionUsdInput").value = settings.positionUSD || 5.5;
 document.getElementById("rowHeightInput").value = settings.rowHeight || 28;
 document.getElementById("rvolTfInput").value = settings.rvolTf || "5m";
-document.getElementById("avgCandlesInput").value = settings.avgCandles || 300;
-document.getElementById("breakoutCandlesInput").value = settings.breakoutCandles || 300;
+document.getElementById("avgCandlesInput").value = settings.avgCandles ?? 300;
+document.getElementById("breakoutCandlesInput").value = settings.breakoutCandles ?? 300;
 document.getElementById("swapLayoutInput").checked = settings.swapLayout ?? false;
 
 render();
@@ -1507,8 +1517,8 @@ document.getElementById("soundToggle").checked = settings.sound ?? true;
 document.getElementById("positionUsdInput").value = settings.positionUSD || 5.5;
 document.getElementById("rowHeightInput").value = settings.rowHeight || 28;
 document.getElementById("rvolTfInput").value = settings.rvolTf || "5m";
-document.getElementById("avgCandlesInput").value = settings.avgCandles || 300;
-document.getElementById("breakoutCandlesInput").value = settings.breakoutCandles || 300;
+document.getElementById("avgCandlesInput").value = settings.avgCandles ?? 300;
+document.getElementById("breakoutCandlesInput").value = settings.breakoutCandles ?? 300;
 };
 
 // SAVE
@@ -1522,8 +1532,8 @@ applyLayout();
 
 // 🔥 NEW SETTINGS SAVE
 settings.rvolTf = document.getElementById("rvolTfInput").value;
-settings.avgCandles = parseInt(document.getElementById("avgCandlesInput").value) || 300;
-settings.breakoutCandles = parseInt(document.getElementById("breakoutCandlesInput").value) || 300;
+settings.avgCandles = parseInt(document.getElementById("avgCandlesInput").value) ?? 300;
+settings.breakoutCandles = parseInt(document.getElementById("breakoutCandlesInput").value) ?? 300;
 	
 saveSettings();
 document.getElementById("settingsPopup").style.display="none";
