@@ -453,8 +453,6 @@ rowHeight:28,
 swapLayout:false,
 timeframe:"15",
 theme:"light",
-
-// 🔥 NEW RVOL SETTINGS
 rvolTf:"5m",
 avgCandles:300,
 breakoutCandles:300
@@ -556,13 +554,13 @@ firstLoad = false;
 
 });
 
-const s = localStorage.getItem("rvolSettings");
+const s = localStorage.getItem("rvolBreakoutSettings");
 if(s) settings = JSON.parse(s);
 
 }
 
 function saveSettings(){
-localStorage.setItem("rvolSettings", JSON.stringify(settings));
+localStorage.setItem("rvolBreakoutSettings", JSON.stringify(settings));
 }
 
 function formatTime(ts){
@@ -1471,13 +1469,13 @@ document.getElementById("swapLayoutInput").checked = settings.swapLayout;
 
 pop.style.display="block";
 
-document.getElementById("minRvolInput").value=settings.minRvol;
-document.getElementById("soundToggle").checked=settings.sound;
-document.getElementById("positionUsdInput").value=settings.positionUSD;
-document.getElementById("rowHeightInput").value=settings.rowHeight;
-document.getElementById("rvolTfInput").value=settings.rvolTf;
-document.getElementById("avgCandlesInput").value=settings.avgCandles;
-document.getElementById("breakoutCandlesInput").value=settings.breakoutCandles;
+document.getElementById("minRvolInput").value = settings.minRvol || 15;
+document.getElementById("soundToggle").checked = settings.sound ?? true;
+document.getElementById("positionUsdInput").value = settings.positionUSD || 5.5;
+document.getElementById("rowHeightInput").value = settings.rowHeight || 28;
+document.getElementById("rvolTfInput").value = settings.rvolTf || "5m";
+document.getElementById("avgCandlesInput").value = settings.avgCandles || 300;
+document.getElementById("breakoutCandlesInput").value = settings.breakoutCandles || 300;
 };
 
 // SAVE
