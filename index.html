@@ -686,8 +686,12 @@ setTimeout(()=>reject(new Error("timeout")),timeout)
 async function getRVOLData(symbol){
 try{
 
-let tf = settings.rvolTf || "5m";
-let maxLen = Math.max(settings.avgCandles || 300, settings.breakoutCandles || 300);
+let tf = settings.rvolTf ?? "5m";
+
+let avgLen = settings.avgCandles ?? 300;
+let breakoutLen = settings.breakoutCandles ?? 300;
+
+let maxLen = Math.max(avgLen, breakoutLen);
 
 let limit = maxLen + 2;
 
@@ -703,7 +707,7 @@ return null;
 }
 
 // 300 candles avg
-let avgLen = settings.avgCandles || 300;
+let avgLen = settings.avgCandles ?? 300;
 
 let vols=data.slice(0,avgLen).map(x=>parseFloat(x[5]));
 let avg=vols.reduce((a,b)=>a+b,0)/avgLen;
@@ -724,12 +728,11 @@ let liveHigh=parseFloat(live[2]);
 // 🔥 BREAKOUT RANGE
 let breakoutLen = settings.breakoutCandles ?? 300;
 
-let breakoutPass = true; // default
+let breakoutPass = true;
 
-// 🔥 breakout filter only if >0
 if(breakoutLen > 0){
 
-let highs=data.slice(0,breakoutLen).map(x=>parseFloat(x[2]));
+let highs = data.slice(0, breakoutLen).map(x=>parseFloat(x[2]));
 
 let highestHigh = -Infinity;
 
