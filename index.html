@@ -730,7 +730,9 @@ let breakoutPass = true;
 
 if(breakoutLen > 0){
 
-let highs = data.slice(0, breakoutLen).map(x=>parseFloat(x[2]));
+let startIndex = data.length - breakoutLen - 2;
+
+let highs = data.slice(startIndex, data.length - 2).map(x=>parseFloat(x[2]));
 
 let highestHigh = -Infinity;
 
