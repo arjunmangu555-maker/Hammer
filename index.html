@@ -454,7 +454,7 @@ swapLayout:false,
 timeframe:"15",
 theme:"light",
 rvolTf:"15m",
-avgCandles:300,
+avgCandles:200,
 breakoutCandles:0
 };
 	
@@ -688,8 +688,8 @@ try{
 
 let tf = settings.rvolTf ?? "15m";
 
-let avgLen = settings.avgCandles ?? 300;
-let breakoutLen = settings.breakoutCandles ?? 300;
+let avgLen = settings.avgCandles ?? 200;
+let breakoutLen = settings.breakoutCandles ?? 0;
 
 let maxLen = Math.max(avgLen, breakoutLen);
 
@@ -706,7 +706,7 @@ if(data.length < limit){
 return null;
 }
 
-// 300 candles avg
+// 200 candles avg
 
 let vols=data.slice(0,avgLen).map(x=>parseFloat(x[5]));
 let avg=vols.reduce((a,b)=>a+b,0)/avgLen;
@@ -1523,18 +1523,17 @@ document.getElementById("breakoutCandlesInput").value = settings.breakoutCandles
 
 // SAVE
 document.getElementById("saveSettingsBtn").onclick=()=>{
-settings.minRvol = Math.max(1, parseInt(document.getElementById("minRvolInput").value) || 15);
+
+settings.minRvol = Math.max(1, parseInt(document.getElementById("minRvolInput").value));
 settings.sound = document.getElementById("soundToggle").checked;
-settings.positionUSD = parseFloat(document.getElementById("positionUsdInput").value) || 5.5;
-settings.rowHeight = Math.max(18, parseInt(document.getElementById("rowHeightInput").value) || 28);
+settings.positionUSD = parseFloat(document.getElementById("positionUsdInput").value);
+settings.rowHeight = Math.max(18, parseInt(document.getElementById("rowHeightInput").value));
 settings.swapLayout = document.getElementById("swapLayoutInput").checked;
 applyLayout();  
-
-// 🔥 NEW SETTINGS SAVE
 settings.rvolTf = document.getElementById("rvolTfInput").value;
-settings.avgCandles = parseInt(document.getElementById("avgCandlesInput").value) ?? 200;
-settings.breakoutCandles = parseInt(document.getElementById("breakoutCandlesInput").value) ?? 0;
-	
+settings.avgCandles = parseInt(document.getElementById("avgCandlesInput").value);
+settings.breakoutCandles = parseInt(document.getElementById("breakoutCandlesInput").value);
+
 saveSettings();
 document.getElementById("settingsPopup").style.display="none";
 };
