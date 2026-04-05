@@ -336,7 +336,8 @@ white-space:nowrap;">
 <div id="copyOption">📋 Copy Symbol</div>
 <div id="favOption">⭐ Favorite Symbol</div>
 <div id="binanceOption">🔥 Open Binance</div>	
-<div id="deleteOption">❌ Delete + Ignore 1 Hrs</div>
+<div id="ignoreOption">⛔ Ignore 1 Hour</div>
+<div id="deleteOption">❌ Delete</div>
 </div>
 
 <div id="settingsPopup">
@@ -1123,12 +1124,27 @@ if(contextSymbol){
 
 delete highRvolSymbols[contextSymbol];
 
-// ADD TO IGNORE LIST (1 HOUR)
+saveList();
+render();
+
+}
+
+hideMenu();
+
+};
+
+document.getElementById("ignoreOption").onclick=()=>{
+
+if(contextSymbol){
+
+delete highRvolSymbols[contextSymbol];
+
+// 1 hour ignore
 ignoreList[contextSymbol] = Date.now() + 3600000;
+
 localStorage.setItem("ignoreList", JSON.stringify(ignoreList));
 
 saveList();
-
 render();
 
 }
