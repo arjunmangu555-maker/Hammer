@@ -802,10 +802,13 @@ localStorage.setItem("ignoreList", JSON.stringify(ignoreList));
 }
 }
 
-let isNew = !highRvolSymbols[item.s];
+// अगर symbol पहले से list में है → ignore
+if(highRvolSymbols[item.s]){
+continue;
+}
 
-// 🔔 sound only if new symbol
-if(isNew && settings.sound && isMasterScanner){
+// 🔔 sound only for new symbol
+if(settings.sound && isMasterScanner){
 
 let now = Date.now();
 if(now - lastSoundTime > 2000){
@@ -817,19 +820,15 @@ lastSoundTime = now;
 
 }
 
-// 📊 update or add symbol
+// 📊 add new symbol
 highRvolSymbols = {
 [item.s]:{
 time:Date.now(),
 rvol: item.r
 },
-...Object.fromEntries(
-Object.entries(highRvolSymbols)
-.filter(([k]) => k !== item.s)
-)
+...highRvolSymbols
 };
 
-// ⚡ save + render only if new OR updated
 saveList();
 render();
 
