@@ -455,7 +455,7 @@ timeframe:"15",
 theme:"light",
 rvolTf:"15m",
 avgCandles:300,
-breakoutCandles:300
+breakoutCandles:0
 };
 	
 let favorites = [];
@@ -1456,8 +1456,8 @@ document.getElementById("minRvolInput").value = settings.minRvol || 15;
 document.getElementById("positionUsdInput").value = settings.positionUSD || 5.5;
 document.getElementById("rowHeightInput").value = settings.rowHeight || 28;
 document.getElementById("rvolTfInput").value = settings.rvolTf ?? "15m";
-document.getElementById("avgCandlesInput").value = settings.avgCandles ?? 300;
-document.getElementById("breakoutCandlesInput").value = settings.breakoutCandles ?? 300;
+document.getElementById("avgCandlesInput").value = settings.avgCandles ?? 200;
+document.getElementById("breakoutCandlesInput").value = settings.breakoutCandles ?? 0;
 document.getElementById("swapLayoutInput").checked = settings.swapLayout ?? false;
 
 render();
@@ -1517,8 +1517,8 @@ document.getElementById("soundToggle").checked = settings.sound ?? true;
 document.getElementById("positionUsdInput").value = settings.positionUSD || 5.5;
 document.getElementById("rowHeightInput").value = settings.rowHeight || 28;
 document.getElementById("rvolTfInput").value = settings.rvolTf ?? "15m";
-document.getElementById("avgCandlesInput").value = settings.avgCandles ?? 300;
-document.getElementById("breakoutCandlesInput").value = settings.breakoutCandles ?? 300;
+document.getElementById("avgCandlesInput").value = settings.avgCandles ?? 200;
+document.getElementById("breakoutCandlesInput").value = settings.breakoutCandles ?? 0;
 };
 
 // SAVE
@@ -1532,8 +1532,8 @@ applyLayout();
 
 // 🔥 NEW SETTINGS SAVE
 settings.rvolTf = document.getElementById("rvolTfInput").value;
-settings.avgCandles = parseInt(document.getElementById("avgCandlesInput").value) ?? 300;
-settings.breakoutCandles = parseInt(document.getElementById("breakoutCandlesInput").value) ?? 300;
+settings.avgCandles = parseInt(document.getElementById("avgCandlesInput").value) ?? 200;
+settings.breakoutCandles = parseInt(document.getElementById("breakoutCandlesInput").value) ?? 0;
 	
 saveSettings();
 document.getElementById("settingsPopup").style.display="none";
