@@ -608,17 +608,32 @@ document.getElementById("updateText").innerText = "Viewer Mode";
 
 }
 	
-document.getElementById("resetBtn").onclick=()=>{
+document.getElementById("resetBtn").onclick = async ()=>{
 
-if(confirm("Reset Scanner ? All saved data will be cleared.")){
+if(!confirm("Reset Scanner ? All saved data will be cleared.")) return;
 
-db.ref("scanner").remove();
-db.ref("scannerLock").remove();
-db.ref("favorites").remove();
-localStorage.removeItem("rvolSettings");
-location.reload();
+try{
+
+// 🔥 clear local storage
+localStorage.clear();
+
+// 🔥 clear firebase scanner signals
+await db.ref("scanner").remove();
+
+// 🔥 clear favorites
+await db.ref("favorites").remove();
+
+// 🔥 clear scanner lock
+await db.ref("scannerLock").remove();
+
+}catch(e){
+
+console.log("Reset error:",e);
 
 }
+
+// 🔄 reload scanner
+location.reload();
 
 };
 
@@ -686,6 +701,8 @@ let avgLen = settings.avgCandles || 300;
 let vols=data.slice(0,avgLen).map(x=>parseFloat(x[5]));
 let avg=vols.reduce((a,b)=>a+b,0)/avgLen;
 
+
+if(!data[avgLen] || !data[avgLen+1]) return null;
 
 let closed = data[avgLen];
 let live = data[avgLen+1];
@@ -1483,7 +1500,7 @@ document.getElementById("saveSettingsBtn").onclick=()=>{
 settings.minRvol = Math.max(1, parseInt(document.getElementById("minRvolInput").value) || 15);
 settings.sound = document.getElementById("soundToggle").checked;
 settings.positionUSD = parseFloat(document.getElementById("positionUsdInput").value) || 5.5;
-settings.rowHeight = Math.max(18, parseInt(document.getElementById("rowHeightInput").value) || 40);
+settings.rowHeight = Math.max(18, parseInt(document.getElementById("rowHeightInput").value) || 28);
 settings.swapLayout = document.getElementById("swapLayoutInput").checked;
 applyLayout();  
 
