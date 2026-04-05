@@ -1456,7 +1456,7 @@ document.getElementById("minRvolInput").value = settings.minRvol || 15;
 document.getElementById("positionUsdInput").value = settings.positionUSD || 5.5;
 document.getElementById("rowHeightInput").value = settings.rowHeight || 28;
 document.getElementById("rvolTfInput").value = settings.rvolTf ?? "15m";
-document.getElementById("avgCandlesInput").value = settings.avgCandles ?? 200;
+document.getElementById("avgCandlesInput").value = settings.avgCandles;
 document.getElementById("breakoutCandlesInput").value = settings.breakoutCandles ?? 0;
 document.getElementById("swapLayoutInput").checked = settings.swapLayout ?? false;
 
@@ -1512,13 +1512,13 @@ document.getElementById("swapLayoutInput").checked = settings.swapLayout;
 
 pop.style.display="block";
 
-document.getElementById("minRvolInput").value = settings.minRvol || 15;
-document.getElementById("soundToggle").checked = settings.sound ?? true;
-document.getElementById("positionUsdInput").value = settings.positionUSD || 5.5;
-document.getElementById("rowHeightInput").value = settings.rowHeight || 28;
-document.getElementById("rvolTfInput").value = settings.rvolTf ?? "15m";
-document.getElementById("avgCandlesInput").value = settings.avgCandles ?? 200;
-document.getElementById("breakoutCandlesInput").value = settings.breakoutCandles ?? 0;
+document.getElementById("minRvolInput").value = settings.minRvol;
+document.getElementById("soundToggle").checked = settings.sound;
+document.getElementById("positionUsdInput").value = settings.positionUSD;
+document.getElementById("rowHeightInput").value = settings.rowHeight;
+document.getElementById("rvolTfInput").value = settings.rvolTf;
+document.getElementById("avgCandlesInput").value = settings.avgCandles;
+document.getElementById("breakoutCandlesInput").value = settings.breakoutCandles;
 };
 
 // SAVE
