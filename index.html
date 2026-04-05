@@ -374,7 +374,7 @@ white-space:nowrap;">
 <option value="1m">1m</option>
 <option value="3m">3m</option>
 <option value="5m">5m</option>
-<option value="15m">15m</option>
+<option value="15m" selected>15m</option>
 </select>
 </div>
 
@@ -453,7 +453,7 @@ rowHeight:28,
 swapLayout:false,
 timeframe:"15",
 theme:"light",
-rvolTf:"5m",
+rvolTf:"15m",
 avgCandles:300,
 breakoutCandles:300
 };
@@ -686,7 +686,7 @@ setTimeout(()=>reject(new Error("timeout")),timeout)
 async function getRVOLData(symbol){
 try{
 
-let tf = settings.rvolTf ?? "5m";
+let tf = settings.rvolTf ?? "15m";
 
 let avgLen = settings.avgCandles ?? 300;
 let breakoutLen = settings.breakoutCandles ?? 300;
@@ -707,7 +707,6 @@ return null;
 }
 
 // 300 candles avg
-let avgLen = settings.avgCandles ?? 300;
 
 let vols=data.slice(0,avgLen).map(x=>parseFloat(x[5]));
 let avg=vols.reduce((a,b)=>a+b,0)/avgLen;
@@ -726,8 +725,6 @@ let closedHigh=parseFloat(closed[2]);
 let liveHigh=parseFloat(live[2]);
 
 // 🔥 BREAKOUT RANGE
-let breakoutLen = settings.breakoutCandles ?? 300;
-
 let breakoutPass = true;
 
 if(breakoutLen > 0){
@@ -1458,7 +1455,7 @@ document.getElementById("soundToggle").checked = settings.sound ?? true;
 document.getElementById("minRvolInput").value = settings.minRvol || 15;
 document.getElementById("positionUsdInput").value = settings.positionUSD || 5.5;
 document.getElementById("rowHeightInput").value = settings.rowHeight || 28;
-document.getElementById("rvolTfInput").value = settings.rvolTf || "5m";
+document.getElementById("rvolTfInput").value = settings.rvolTf ?? "15m";
 document.getElementById("avgCandlesInput").value = settings.avgCandles ?? 300;
 document.getElementById("breakoutCandlesInput").value = settings.breakoutCandles ?? 300;
 document.getElementById("swapLayoutInput").checked = settings.swapLayout ?? false;
@@ -1519,7 +1516,7 @@ document.getElementById("minRvolInput").value = settings.minRvol || 15;
 document.getElementById("soundToggle").checked = settings.sound ?? true;
 document.getElementById("positionUsdInput").value = settings.positionUSD || 5.5;
 document.getElementById("rowHeightInput").value = settings.rowHeight || 28;
-document.getElementById("rvolTfInput").value = settings.rvolTf || "5m";
+document.getElementById("rvolTfInput").value = settings.rvolTf ?? "15m";
 document.getElementById("avgCandlesInput").value = settings.avgCandles ?? 300;
 document.getElementById("breakoutCandlesInput").value = settings.breakoutCandles ?? 300;
 };
